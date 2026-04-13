@@ -1,153 +1,75 @@
-import tkinter as tk
-from tkinter import ttk, messagebox
-import sqlite3
+from supabase import create_client, Client
 
-DB = "jogo.db"
+# Configuração do Supabase
+url = "https://YOUR_PROJECT_URL.supabase.co"  # Substitua com sua URL do Supabase
+key = "YOUR_API_KEY"  # Substitua com sua chave de API
+supabase: Client = create_client(url, key)
 
+# Função para criar tabelas (Isso é feito no painel do Supabase, não necessário aqui)
+def criar_tabelas():
+    pass
 
-
-
-def conectar():
-    conn = sqlite3.connect(DB)
-    cursor = conn.cursor()
-    
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS enigmas (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        pergunta TEXT,
-        resposta TEXT,
-        dificuldade TEXT,
-        pontos INTEGER
-    )
-    """)
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS dicas (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        enigma_id INTEGER,
-        dica TEXT,
-        FOREIGN KEY(enigma_id) REFERENCES enigmas(id)
-    )
-    """)
-    conn.commit()
-    return conn, cursor
-
-def adicionar_enigma_db(pergunta, resposta, dificuldade, pontos):
-    conn, cursor = conectar()
-    cursor.execute(
-        "INSERT INTO enigmas (pergunta, resposta, dificuldade, pontos) VALUES (?, ?, ?, ?)",
-        (pergunta, resposta, dificuldade, pontos)
-    )
-    conn.commit()
-    conn.close()
-
-def listar_enigmas_db():
-    conn, cursor = conectar()
-    cursor.execute("SELECT id, pergunta FROM enigmas")
-    enigmas = cursor.fetchall()
-    conn.close()
-    return enigmas
-
-def adicionar_dica_db(enigma_id, dica):
-    conn, cursor = conectar()
-    cursor.execute(
-        "INSERT INTO dicas (enigma_id, dica) VALUES (?, ?)",
-        (enigma_id, dica)
-    )
-    conn.commit()
-    conn.close()
-
-
-
-def adicionar_enigma():
-    pergunta = entry_pergunta.get().strip()
-    resposta = entry_resposta.get().strip()
-    dificuldade = combo_dificuldade.get()
-    pontos = entry_pontos.get().strip()
-
-    if not pergunta or not resposta or not dificuldade or not pontos:
-        messagebox.showwarning("Aviso", "Preencha todos os campos!")
-        return
-
+# Funções relacionadas a usuários
+def cadastrar(usuario, senha, admin=0):
+    data = {"usuario": usuario, "senha": senha, "pontos": 0, "admin": admin}
     try:
-        pontos_int = int(pontos)
-    except ValueError:
-        messagebox.showerror("Erro", "Pontos deve ser um número inteiro!")
-        return
-
-    adicionar_enigma_db(pergunta, resposta, dificuldade, pontos_int)
-    messagebox.showinfo("Sucesso", "Enigma adicionado com sucesso!")
-    entry_pergunta.delete(0, tk.END)
-    entry_resposta.delete(0, tk.END)
-    combo_dificuldade.set('')
-    entry_pontos.delete(0, tk.END)
-    atualizar_enigmas()
-
-def adicionar_dica():
-    escolha = combo_enigmas.get()
-    if not escolha:
-        messagebox.showwarning("Aviso", "Selecione um enigma!")
-        return
-    dica = entry_dica.get().strip()
-    if not dica:
-        messagebox.showwarning("Aviso", "Digite a dica!")
-        return
-
-    enigma_id = enigmas_dict[escolha]
-    adicionar_dica_db(enigma_id, dica)
-    messagebox.showinfo("Sucesso", "Dica adicionada com sucesso!")
-    entry_dica.delete(0, tk.END)
-
-def atualizar_enigmas():
-    global enigmas_dict
-    enigmas = listar_enigmas_db()
-    enigmas_dict = {f"{e[0]} - {e[1][:40]}...": e[0] for e in enigmas}
-    combo_enigmas['values'] = list(enigmas_dict.keys())
+        response = supabase.table("usuarios").insert(data).execute()
+        if response.status_code == 201:
+            return True
+    except Exception as e:
+        print(f"Erro ao cadastrar: {e}")
+    return False
 
 
+def login(usuario, senha):
+    response = supabase.table("usuarios").select("*").eq("usuario", usuario).eq("senha", senha).execute()
+    if response.data:
+        return response.data[0]["usuario"], response.data[0]["admin"]
+    return None
 
-root = tk.Tk()
-root.title("Painel Admin - Enigmas")
-root.geometry("500x500")
+
+def adicionar_pontos(usuario, pontos):
+    response = supabase.table("usuarios").update({"pontos": {"pontos": pontos}}).eq("usuario", usuario).execute()
+    return response.status_code == 200
 
 
+def obter_info_usuario(usuario):
+    response = supabase.table("usuarios").select("*").eq("usuario", usuario).execute()
+    if response.data:
+        return response.data[0]["usuario"], response.data[0]["pontos"], response.data[0]["admin"]
+    return None
 
-frame_enigma = tk.LabelFrame(root, text="Adicionar Enigma", padx=10, pady=10)
-frame_enigma.pack(padx=10, pady=10, fill="both")
 
-tk.Label(frame_enigma, text="Pergunta:").pack(anchor="w")
-entry_pergunta = tk.Entry(frame_enigma, width=50)
-entry_pergunta.pack()
+# Funções relacionadas aos enigmas
+def listar_enigmas(dificuldade):
+    response = supabase.table("enigmas").select("*").eq("dificuldade", dificuldade).execute()
+    return response.data
 
-tk.Label(frame_enigma, text="Resposta:").pack(anchor="w")
-entry_resposta = tk.Entry(frame_enigma, width=50)
-entry_resposta.pack()
 
-tk.Label(frame_enigma, text="Dificuldade:").pack(anchor="w")
-combo_dificuldade = ttk.Combobox(frame_enigma, values=["Fácil", "Médio", "Difícil"], state="readonly")
-combo_dificuldade.pack()
+def obter_dicas(enigma_id):
+    response = supabase.table("dicas").select("dica").eq("enigma_id", enigma_id).execute()
+    return [dica["dica"] for dica in response.data]
 
-tk.Label(frame_enigma, text="Pontos:").pack(anchor="w")
-entry_pontos = tk.Entry(frame_enigma, width=10)
-entry_pontos.pack()
 
-tk.Button(frame_enigma, text="Adicionar Enigma", command=adicionar_enigma).pack(pady=10)
+def obter_tentativas(usuario, enigma_id):
+    response = supabase.table("tentativas_usuario").select("*").eq("usuario", usuario).eq("enigma_id", enigma_id).execute()
+    if not response.data:
+        data = {"usuario": usuario, "enigma_id": enigma_id, "tentativas_restantes": 3}
+        supabase.table("tentativas_usuario").insert(data).execute()
+        return 3
+    return response.data[0]["tentativas_restantes"]
 
-#Adicionar Dica
-frame_dica = tk.LabelFrame(root, text="Adicionar Dica", padx=10, pady=10)
-frame_dica.pack(padx=10, pady=10, fill="both")
 
-tk.Label(frame_dica, text="Selecione Enigma:").pack(anchor="w")
-combo_enigmas = ttk.Combobox(frame_dica, state="readonly")
-combo_enigmas.pack()
+def decrementar_tentativa(usuario, enigma_id):
+    response = supabase.table("tentativas_usuario").update({"tentativas_restantes": {"tentativas_restantes": -1}}).eq("usuario", usuario).eq("enigma_id", enigma_id).execute()
+    return response.status_code == 200
 
-tk.Label(frame_dica, text="Dica:").pack(anchor="w")
-entry_dica = tk.Entry(frame_dica, width=50)
-entry_dica.pack()
 
-tk.Button(frame_dica, text="Adicionar Dica", command=adicionar_dica).pack(pady=10)
+def enigma_concluido(usuario, enigma_id):
+    response = supabase.table("enigmas_respondidos").select("*").eq("usuario", usuario).eq("enigma_id", enigma_id).execute()
+    return len(response.data) > 0 and response.data[0]["concluido"] == 1
 
-# Atualizar enigmas ao iniciar
-enigmas_dict = {}
-atualizar_enigmas()
 
-root.mainloop()
+def marcar_concluido(usuario, enigma_id):
+    response = supabase.table("enigmas_respondidos").upsert([{"usuario": usuario, "enigma_id": enigma_id, "concluido": 1}]).execute()
+    return response.status_code == 200
