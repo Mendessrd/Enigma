@@ -1,8 +1,8 @@
 from supabase import create_client, Client
 
 # Configuração do Supabase
-url = "https://YOUR_PROJECT_URL.supabase.co"  # Substitua com sua URL do Supabase
-key = "YOUR_API_KEY"  # Substitua com sua chave de API
+url = "https://dgluywqmlelrsyranccq.supabase.co"  # Substitua com sua URL do Supabase
+key = "sb_publishable_OEWLYDNBKoGB1HRRrWtv8A_tKGZQFR9"  # Substitua com sua chave de API
 supabase: Client = create_client(url, key)
 
 # Função para criar tabelas (Isso é feito no painel do Supabase, não necessário aqui)
