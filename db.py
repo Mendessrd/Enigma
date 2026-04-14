@@ -9,11 +9,14 @@ supabase = create_client(
 )
 
 # ==============================
-# USUÁRIOS (igual ao seu)
+# USUÁRIOS
 # ==============================
 
 def cadastrar(usuario, senha):
-    senha_hash = bcrypt.hashpw(senha.encode(), bcrypt.gensalt()).decode()
+    senha_hash = bcrypt.hashpw(
+        senha.encode(),
+        bcrypt.gensalt()
+    ).decode()
 
     data = {
         "usuario": usuario,
@@ -32,7 +35,10 @@ def login(usuario, senha):
     if res.data:
         user = res.data[0]
 
-        if bcrypt.checkpw(senha.encode(), user["senha"].encode()):
+        if bcrypt.checkpw(
+            senha.encode(),
+            user["senha"].encode()
+        ):
             return user["id"]
 
     return None
@@ -46,31 +52,37 @@ def adicionar_pontos(user_id, pontos):
 
     total = res.data[0]["pontos"] + pontos
 
-    supabase.table("usuarios").update({"pontos": total}).eq("id", user_id).execute()
+    supabase.table("usuarios").update({
+        "pontos": total
+    }).eq("id", user_id).execute()
+
     return True
 
 
 def obter_usuario(user_id):
     res = supabase.table("usuarios").select("*").eq("id", user_id).execute()
-
     return res.data[0] if res.data else None
 
 
 # ==============================
-# ENIGMAS (NOVO)
+# ENIGMAS
 # ==============================
 
-def criar_enigma(enigma, resposta, dica, dificuldade, pontos):
+def criar_enigma(pergunta, resposta, dica, dificuldade, pontos):
     data = {
-        "enigma": enigma,
+        "pergunta": pergunta,   # ✅ CORRIGIDO
         "resposta": resposta,
-        "dica": dica,
+        "dica": dica,           # ✅ agora existe na tabela
         "dificuldade": dificuldade,
         "pontos": pontos
     }
 
-    res = supabase.table("enigmas").insert(data).execute()
-    return res.data is not None
+    try:
+        res = supabase.table("enigmas").insert(data).execute()
+        return True
+    except Exception as e:
+        print("ERRO SUPABASE:", e)
+        return False
 
 
 def pegar_enigma_aleatorio():

@@ -64,7 +64,7 @@ elif menu == "Jogar":
         e = st.session_state["enigma"]
 
         st.subheader("🧩 Enigma")
-        st.write(e["enigma"])
+        st.write(e["pergunta"])   # ✅ CORRIGIDO
 
         if st.button("Mostrar dica"):
             st.info(e["dica"])
@@ -95,7 +95,7 @@ elif menu == "Admin":
 
     st.subheader("🔐 Painel Admin - Criar Enigmas")
 
-    enigma = st.text_area("Enigma")
+    pergunta = st.text_area("Enigma")
     resposta = st.text_input("Resposta")
     dica = st.text_input("Dica")
 
@@ -107,7 +107,7 @@ elif menu == "Admin":
     pontos = st.number_input("Pontos", min_value=1, value=10)
 
     if st.button("Criar Enigma"):
-        if criar_enigma(enigma, resposta, dica, dificuldade, pontos):
+        if criar_enigma(pergunta, resposta, dica, dificuldade, pontos):
             st.success("Enigma criado!")
         else:
             st.error("Erro ao criar enigma")
