@@ -7,7 +7,7 @@ from db import *
 st.set_page_config(page_title="Enigmas Game", layout="centered")
 
 # =========================
-# CSS (UI ESTILO JOGO)
+# CSS (UI GAME)
 # =========================
 st.markdown("""
 <style>
@@ -37,7 +37,6 @@ h1, h2, h3 {
     border: none;
     padding: 0.6rem 1rem;
     font-weight: bold;
-    transition: 0.2s;
 }
 
 .stButton button:hover {
@@ -59,7 +58,6 @@ input, textarea {
     padding: 20px;
     border-radius: 15px;
     border: 1px solid #1f2937;
-    box-shadow: 0 0 20px #00000066;
     margin-bottom: 20px;
 }
 
@@ -87,19 +85,7 @@ def logout():
     st.rerun()
 
 # =========================
-# MENU
-# =========================
-menu = st.sidebar.selectbox(
-    "Menu",
-    ["Login", "Cadastro", "Jogar", "Admin", "Ranking"]
-)
-
-st.title("Enigmas do Taijara")
-
-st.sidebar.divider()
-
-# =========================
-# HUD USER
+# SIDEBAR HUD (TOPO)
 # =========================
 st.sidebar.markdown("## 🎮 PLAYER HUD")
 
@@ -107,7 +93,13 @@ if "user_id" in st.session_state:
     user = obter_usuario(st.session_state["user_id"])
 
     st.sidebar.markdown(f"""
-    <div style="padding:10px; background:#0b1220; border-radius:10px;">
+    <div style="
+        padding:12px;
+        background:#0b1220;
+        border-radius:12px;
+        border:1px solid #1f2937;
+        margin-bottom:15px;
+    ">
         👤 <b>{user['usuario']}</b><br>
         ⭐ Pontos: <b>{user['pontos']}</b>
     </div>
@@ -117,7 +109,29 @@ if "user_id" in st.session_state:
         logout()
 
 else:
-    st.sidebar.info("Deslogado")
+    st.sidebar.markdown("""
+    <div style="
+        padding:12px;
+        background:#0b1220;
+        border-radius:12px;
+        border:1px solid #1f2937;
+        margin-bottom:15px;
+    ">
+        ❌ Não logado
+    </div>
+    """, unsafe_allow_html=True)
+
+# =========================
+# MENU
+# =========================
+menu = st.sidebar.selectbox(
+    "Menu",
+    ["Login", "Cadastro", "Jogar", "Admin", "Ranking"]
+)
+
+st.title("🧩 Enigmas Game")
+
+st.sidebar.divider()
 
 # =========================
 # CADASTRO
@@ -168,9 +182,7 @@ elif menu == "Jogar":
 
     e = st.session_state["enigma"]
 
-    # =========================
     # CARD ENIGMA
-    # =========================
     st.markdown(f"""
     <div class="game-card">
         <h2 class="glow">🧩 Enigma</h2>
@@ -178,22 +190,14 @@ elif menu == "Jogar":
     </div>
     """, unsafe_allow_html=True)
 
-    # =========================
     # DICAS
-    # =========================
     if st.button("💡 Mostrar dica"):
 
         dicas = e.get("dicas", [])
 
         if st.session_state["dica_index"] < len(dicas):
 
-            st.markdown(f"""
-            <div class="game-card">
-                <b style="color:#facc15">💡 Dica:</b><br>
-                {dicas[st.session_state['dica_index']]}
-            </div>
-            """, unsafe_allow_html=True)
-
+            st.info(dicas[st.session_state["dica_index"]])
             st.session_state["dica_index"] += 1
 
             st.session_state["pontos_atual"] = max(
@@ -206,9 +210,7 @@ elif menu == "Jogar":
 
     st.write(f"⭐ Pontos atuais: {st.session_state['pontos_atual']}")
 
-    # =========================
-    # CONTROLE DE TENTATIVAS
-    # =========================
+    # STATUS
     status = get_status(st.session_state["user_id"], e["id"])
 
     if status and status["concluido"]:
@@ -226,7 +228,7 @@ elif menu == "Jogar":
 
         if resposta.strip().lower() == e["resposta"].strip().lower():
 
-            st.success("✅ Correto!")
+            st.success("Correto!")
 
             adicionar_pontos(
                 st.session_state["user_id"],
@@ -242,7 +244,7 @@ elif menu == "Jogar":
         else:
 
             if done:
-                st.error("❌ 3 tentativas atingidas")
+                st.error("3 tentativas atingidas")
             else:
                 st.error(f"Errado ({tent}/3)")
 
