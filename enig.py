@@ -94,7 +94,7 @@ menu = st.sidebar.selectbox(
     ["Login", "Cadastro", "Jogar", "Admin", "Ranking"]
 )
 
-st.title("🧩 Enigmas Game")
+st.title("Enigmas do Taijara")
 
 st.sidebar.divider()
 
