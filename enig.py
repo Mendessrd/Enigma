@@ -1,143 +1,154 @@
 import streamlit as st
-from db import (
-    cadastrar,
-    login,
-    adicionar_pontos,
-    obter_usuario,
-    criar_enigma,
-    pegar_enigma_aleatorio
-)
+from db import *
 
-st.set_page_config(page_title="Jogo de Enigmas", layout="centered")
+st.set_page_config(page_title="Enigmas Game", layout="centered")
 
-st.title("🧩 Enigmas com Admin")
-
-# ==============================
-# ADMIN FIXO
-# ==============================
 ADMIN_USER = "admin"
 ADMIN_PASS = "1234"
 
-menu = st.sidebar.selectbox("Menu", ["Login", "Cadastro", "Jogar", "Admin"])
+menu = st.sidebar.selectbox("Menu", ["Login", "Cadastro", "Jogar", "Admin", "Ranking"])
 
-# ==============================
+# =========================
 # CADASTRO
-# ==============================
+# =========================
 if menu == "Cadastro":
-
     user = st.text_input("Usuário")
     senha = st.text_input("Senha", type="password")
 
     if st.button("Cadastrar"):
-        if cadastrar(user, senha):
-            st.success("Conta criada!")
-        else:
-            st.error("Erro ao cadastrar")
+        cadastrar(user, senha)
+        st.success("Criado!")
 
-# ==============================
+# =========================
 # LOGIN
-# ==============================
+# =========================
 elif menu == "Login":
-
     user = st.text_input("Usuário")
     senha = st.text_input("Senha", type="password")
 
     if st.button("Entrar"):
         uid = login(user, senha)
-
         if uid:
             st.session_state["user_id"] = uid
             st.success("Logado!")
-        else:
-            st.error("Erro no login")
 
-# ==============================
+# =========================
 # JOGO
-# ==============================
+# =========================
 elif menu == "Jogar":
 
     if "user_id" not in st.session_state:
-        st.warning("Faça login primeiro")
+        st.warning("Faça login")
+        st.stop()
 
-    else:
-        if "enigma" not in st.session_state:
-            enigma = pegar_enigma_aleatorio()
+    if "enigma" not in st.session_state:
+        st.session_state["enigma"] = pegar_enigma_aleatorio()
+        st.session_state["dica_index"] = 0
+        st.session_state["pontos_atual"] = st.session_state["enigma"]["pontos"]
 
-            if not enigma:
-                st.warning("Nenhum enigma cadastrado")
-                st.stop()
+    e = st.session_state["enigma"]
 
-            st.session_state["enigma"] = enigma
+    st.title(e["pergunta"])
 
-        e = st.session_state["enigma"]
+    # =========================
+    # DICAS PROGRESSIVAS
+    # =========================
+    if st.button("Mostrar dica"):
 
-        st.subheader("🧩 Enigma")
-        st.write(e["pergunta"])
+        dicas = e.get("dicas", [])
 
-        if st.button("Mostrar dica"):
-            st.info(e["dica"])
+        if st.session_state["dica_index"] < len(dicas):
 
-        resposta_user = st.text_input("Sua resposta")
+            st.info(dicas[st.session_state["dica_index"]])
+            st.session_state["dica_index"] += 1
 
-        if st.button("Responder"):
+            st.session_state["pontos_atual"] = max(
+                0,
+                st.session_state["pontos_atual"] - 5
+            )
 
-            if resposta_user.strip().lower() == e["resposta"].strip().lower():
+        else:
+            st.warning("Sem mais dicas")
 
-                st.success("✅ Correto!")
+    st.write(f"⭐ Pontos atuais: {st.session_state['pontos_atual']}")
 
-                adicionar_pontos(
-                    st.session_state["user_id"],
-                    e["pontos"]
-                )
+    status = get_status(st.session_state["user_id"], e["id"])
 
-                del st.session_state["enigma"]
+    if status and status["concluido"]:
+        st.error("Você já concluiu este enigma")
+        st.stop()
 
-            else:
-                st.error("❌ Errado")
+    resposta = st.text_input("Resposta")
 
-        user = obter_usuario(st.session_state["user_id"])
-        st.write(f"⭐ Pontos: {user['pontos']}")
+    if st.button("Responder"):
 
-# ==============================
-# ADMIN
-# ==============================
-elif menu == "Admin":
-
-    st.subheader("🔐 Painel Admin")
-
-    if "admin_logado" not in st.session_state:
-
-        user = st.text_input("Admin usuário")
-        senha = st.text_input("Senha admin", type="password")
-
-        if st.button("Entrar como admin"):
-
-            if user == ADMIN_USER and senha == ADMIN_PASS:
-                st.session_state["admin_logado"] = True
-                st.success("Bem-vindo Admin!")
-
-            else:
-                st.error("Acesso negado")
-
-    else:
-        st.success("Modo admin ativo")
-
-        st.subheader("🧩 Criar Enigma")
-
-        pergunta = st.text_area("Enigma")
-        resposta = st.text_input("Resposta")
-        dica = st.text_input("Dica")
-
-        dificuldade = st.selectbox(
-            "Dificuldade",
-            ["fácil", "médio", "difícil"]
+        tent, done = registrar_tentativa(
+            st.session_state["user_id"],
+            e["id"]
         )
 
-        pontos = st.number_input("Pontos", min_value=1, value=10)
+        if resposta.strip().lower() == e["resposta"].strip().lower():
 
-        if st.button("Criar Enigma"):
+            st.success("Correto!")
 
-            if criar_enigma(pergunta, resposta, dica, dificuldade, pontos):
-                st.success("Enigma criado!")
+            adicionar_pontos(
+                st.session_state["user_id"],
+                st.session_state["pontos_atual"]
+            )
+
+            marcar_concluido(st.session_state["user_id"], e["id"])
+
+            del st.session_state["enigma"]
+            del st.session_state["dica_index"]
+            del st.session_state["pontos_atual"]
+
+        else:
+
+            if done:
+                st.error("3 tentativas atingidas")
             else:
-                st.error("Erro ao criar enigma")
+                st.error(f"Errado ({tent}/3)")
+
+# =========================
+# ADMIN
+# =========================
+elif menu == "Admin":
+
+    if "admin" not in st.session_state:
+
+        u = st.text_input("Admin")
+        p = st.text_input("Senha", type="password")
+
+        if st.button("Entrar"):
+            if u == ADMIN_USER and p == ADMIN_PASS:
+                st.session_state["admin"] = True
+                st.success("OK")
+
+    else:
+
+        st.subheader("Criar Enigma")
+
+        pergunta = st.text_area("Pergunta")
+        resposta = st.text_input("Resposta")
+        dicas_input = st.text_area("Dicas (uma por linha)")
+
+        dificuldade = st.selectbox("Dificuldade", ["fácil", "médio", "difícil"])
+        pontos = st.number_input("Pontos", 1, 100, 10)
+
+        if st.button("Criar"):
+
+            dicas = [d.strip() for d in dicas_input.split("\n") if d.strip()]
+
+            criar_enigma(pergunta, resposta, dicas, dificuldade, pontos)
+
+            st.success("Criado!")
+
+# =========================
+# RANKING
+# =========================
+elif menu == "Ranking":
+
+    st.title("🏆 Ranking Global")
+
+    for u in ranking():
+        st.write(f"{u['usuario']} - {u['pontos']} pts")

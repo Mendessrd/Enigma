@@ -8,22 +8,19 @@ supabase = create_client(
     st.secrets["SUPABASE_KEY"]
 )
 
-# ==============================
+# =========================
 # USUÁRIOS
-# ==============================
+# =========================
 
 def cadastrar(usuario, senha):
     senha_hash = bcrypt.hashpw(senha.encode(), bcrypt.gensalt()).decode()
 
-    data = {
+    return supabase.table("usuarios").insert({
         "usuario": usuario,
         "senha": senha_hash,
         "pontos": 0,
         "admin": False
-    }
-
-    res = supabase.table("usuarios").insert(data).execute()
-    return res.data is not None
+    }).execute().data
 
 
 def login(usuario, senha):
@@ -38,48 +35,98 @@ def login(usuario, senha):
     return None
 
 
-def adicionar_pontos(user_id, pontos):
-    res = supabase.table("usuarios").select("pontos").eq("id", user_id).execute()
-
-    if not res.data:
-        return False
-
-    total = res.data[0]["pontos"] + pontos
-
-    supabase.table("usuarios").update({"pontos": total}).eq("id", user_id).execute()
-    return True
-
-
 def obter_usuario(user_id):
     res = supabase.table("usuarios").select("*").eq("id", user_id).execute()
     return res.data[0] if res.data else None
 
 
-# ==============================
-# ENIGMAS
-# ==============================
+def adicionar_pontos(user_id, pontos):
+    user = obter_usuario(user_id)
 
-def criar_enigma(pergunta, resposta, dica, dificuldade, pontos):
-    data = {
+    novo_total = user["pontos"] + pontos
+
+    supabase.table("usuarios") \
+        .update({"pontos": novo_total}) \
+        .eq("id", user_id) \
+        .execute()
+
+
+# =========================
+# ENIGMAS
+# =========================
+
+def criar_enigma(pergunta, resposta, dicas, dificuldade, pontos):
+    return supabase.table("enigmas").insert({
         "pergunta": pergunta,
         "resposta": resposta,
-        "dica": dica,
+        "dicas": dicas,
         "dificuldade": dificuldade,
         "pontos": pontos
-    }
-
-    try:
-        res = supabase.table("enigmas").insert(data).execute()
-        return True
-    except Exception as e:
-        print("ERRO SUPABASE:", e)
-        return False
+    }).execute().data
 
 
 def pegar_enigma_aleatorio():
     res = supabase.table("enigmas").select("*").execute()
+    return random.choice(res.data) if res.data else None
 
-    if not res.data:
-        return None
 
-    return random.choice(res.data)
+# =========================
+# TENTATIVAS
+# =========================
+
+def get_status(user_id, enigma_id):
+    res = supabase.table("tentativas") \
+        .select("*") \
+        .eq("usuario_id", user_id) \
+        .eq("enigma_id", enigma_id) \
+        .execute()
+
+    return res.data[0] if res.data else None
+
+
+def registrar_tentativa(user_id, enigma_id):
+    status = get_status(user_id, enigma_id)
+
+    if not status:
+        supabase.table("tentativas").insert({
+            "usuario_id": user_id,
+            "enigma_id": enigma_id,
+            "tentativas": 1,
+            "concluido": False
+        }).execute()
+        return 1, False
+
+    if status["concluido"]:
+        return status["tentativas"], True
+
+    tent = status["tentativas"] + 1
+    done = tent >= 3
+
+    supabase.table("tentativas") \
+        .update({"tentativas": tent, "concluido": done}) \
+        .eq("id", status["id"]) \
+        .execute()
+
+    return tent, done
+
+
+def marcar_concluido(user_id, enigma_id):
+    supabase.table("tentativas").upsert({
+        "usuario_id": user_id,
+        "enigma_id": enigma_id,
+        "concluido": True,
+        "tentativas": 3
+    }).execute()
+
+
+# =========================
+# RANKING
+# =========================
+
+def ranking():
+    res = supabase.table("usuarios") \
+        .select("*") \
+        .order("pontos", desc=True) \
+        .execute()
+
+    return res.data
