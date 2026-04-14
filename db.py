@@ -122,6 +122,7 @@ def marcar_concluido(user_id, enigma_id):
 def ranking():
     res = supabase.table("usuarios") \
         .select("*") \
+        .eq("admin", False) \
         .order("pontos", desc=True) \
         .execute()
 
