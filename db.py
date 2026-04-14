@@ -42,13 +42,9 @@ def obter_usuario(user_id):
 
 def adicionar_pontos(user_id, pontos):
     user = obter_usuario(user_id)
+    novo = user["pontos"] + pontos
 
-    novo_total = user["pontos"] + pontos
-
-    supabase.table("usuarios") \
-        .update({"pontos": novo_total}) \
-        .eq("id", user_id) \
-        .execute()
+    supabase.table("usuarios").update({"pontos": novo}).eq("id", user_id).execute()
 
 
 # =========================
@@ -102,10 +98,10 @@ def registrar_tentativa(user_id, enigma_id):
     tent = status["tentativas"] + 1
     done = tent >= 3
 
-    supabase.table("tentativas") \
-        .update({"tentativas": tent, "concluido": done}) \
-        .eq("id", status["id"]) \
-        .execute()
+    supabase.table("tentativas").update({
+        "tentativas": tent,
+        "concluido": done
+    }).eq("id", status["id"]).execute()
 
     return tent, done
 

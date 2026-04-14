@@ -3,15 +3,55 @@ from db import *
 
 st.set_page_config(page_title="Enigmas Game", layout="centered")
 
+# =========================
+# ADMIN FIXO
+# =========================
 ADMIN_USER = "admin"
 ADMIN_PASS = "1234"
 
-menu = st.sidebar.selectbox("Menu", ["Login", "Cadastro", "Jogar", "Admin", "Ranking"])
+# =========================
+# LOGOUT
+# =========================
+def logout():
+    for key in ["user_id", "enigma", "dica_index", "pontos_atual", "admin"]:
+        if key in st.session_state:
+            del st.session_state[key]
+    st.rerun()
+
+# =========================
+# MENU
+# =========================
+menu = st.sidebar.selectbox(
+    "Menu",
+    ["Login", "Cadastro", "Jogar", "Admin", "Ranking"]
+)
+
+st.title("🧩 Enigmas com Sistema Completo")
+
+st.sidebar.divider()
+
+# =========================
+# SIDEBAR USER INFO
+# =========================
+if "user_id" in st.session_state:
+
+    user = obter_usuario(st.session_state["user_id"])
+
+    st.sidebar.subheader("👤 Usuário logado")
+    st.sidebar.write(f"**Nome:** {user['usuario']}")
+    st.sidebar.write(f"**Pontos:** {user['pontos']}")
+
+    if st.sidebar.button("🚪 Sair"):
+        logout()
+
+else:
+    st.sidebar.info("Você não está logado")
 
 # =========================
 # CADASTRO
 # =========================
 if menu == "Cadastro":
+
     user = st.text_input("Usuário")
     senha = st.text_input("Senha", type="password")
 
@@ -23,6 +63,7 @@ if menu == "Cadastro":
 # LOGIN
 # =========================
 elif menu == "Login":
+
     user = st.text_input("Usuário")
     senha = st.text_input("Senha", type="password")
 
@@ -42,9 +83,15 @@ elif menu == "Jogar":
         st.stop()
 
     if "enigma" not in st.session_state:
-        st.session_state["enigma"] = pegar_enigma_aleatorio()
+        e = pegar_enigma_aleatorio()
+
+        if not e:
+            st.error("Nenhum enigma cadastrado")
+            st.stop()
+
+        st.session_state["enigma"] = e
         st.session_state["dica_index"] = 0
-        st.session_state["pontos_atual"] = st.session_state["enigma"]["pontos"]
+        st.session_state["pontos_atual"] = e["pontos"]
 
     e = st.session_state["enigma"]
 
