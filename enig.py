@@ -4,7 +4,7 @@ from db import *
 # =========================
 # CONFIG
 # =========================
-st.set_page_config(page_title="Enigmas Game", layout="centered")
+st.set_page_config(page_title="Enigmas do Taijara", layout="centered")
 
 # =========================
 # CSS GAME UI
@@ -82,7 +82,7 @@ def logout():
 # =========================
 # SIDEBAR HUD
 # =========================
-st.sidebar.markdown("## 🎮 PLAYER HUD")
+st.sidebar.markdown("## Universitários")
 
 if "user_id" in st.session_state:
     user = obter_usuario(st.session_state["user_id"])
