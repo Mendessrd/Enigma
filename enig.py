@@ -181,14 +181,37 @@ elif menu == "Jogar":
         </div>
         """, unsafe_allow_html=True)
 
-        if st.button("💡 Dica"):
+        if st.button("💡 Mostrar dica"):
 
             dicas = e.get("dicas", [])
 
             if st.session_state["dica_index"] < len(dicas):
-                st.info(dicas[st.session_state["dica_index"]])
+
                 st.session_state["dica_index"] += 1
-                st.session_state["pontos_atual"] = max(0, st.session_state["pontos_atual"] - 5)
+
+                st.session_state["pontos_atual"] = max(
+                    0,
+                    st.session_state["pontos_atual"] - 5
+                )
+
+        # =========================
+        # LISTA DE DICAS DESBLOQUEADAS
+        # =========================
+        dicas = e.get("dicas", [])
+
+        if dicas:
+
+            st.markdown("### 💡 Dicas desbloqueadas:")
+
+            for i in range(st.session_state["dica_index"]):
+                st.markdown(f"""
+                <div class="game-card">
+                    💡 {dicas[i]}
+                </div>
+                """, unsafe_allow_html=True)
+
+        else:
+            st.info("Nenhuma dica disponível")
 
         st.write(f"⭐ Pontos: {st.session_state['pontos_atual']}")
 
