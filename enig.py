@@ -1,7 +1,75 @@
 import streamlit as st
 from db import *
 
+# =========================
+# CONFIG
+# =========================
 st.set_page_config(page_title="Enigmas Game", layout="centered")
+
+# =========================
+# CSS (UI ESTILO JOGO)
+# =========================
+st.markdown("""
+<style>
+
+.stApp {
+    background: radial-gradient(circle at top, #0f172a, #020617);
+    color: white;
+}
+
+/* Sidebar */
+[data-testid="stSidebar"] {
+    background: #0b1220;
+    border-right: 1px solid #1f2937;
+}
+
+/* Títulos */
+h1, h2, h3 {
+    color: #00e5ff !important;
+    text-shadow: 0px 0px 10px #00e5ff55;
+}
+
+/* Botões */
+.stButton button {
+    background: linear-gradient(90deg, #00e5ff, #7c3aed);
+    color: white;
+    border-radius: 10px;
+    border: none;
+    padding: 0.6rem 1rem;
+    font-weight: bold;
+    transition: 0.2s;
+}
+
+.stButton button:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 15px #00e5ff88;
+}
+
+/* Inputs */
+input, textarea {
+    background-color: #0b1220 !important;
+    color: white !important;
+    border: 1px solid #1f2937 !important;
+    border-radius: 8px !important;
+}
+
+/* Card */
+.game-card {
+    background: #0b1220;
+    padding: 20px;
+    border-radius: 15px;
+    border: 1px solid #1f2937;
+    box-shadow: 0 0 20px #00000066;
+    margin-bottom: 20px;
+}
+
+.glow {
+    color: #00e5ff;
+    text-shadow: 0 0 10px #00e5ff;
+}
+
+</style>
+""", unsafe_allow_html=True)
 
 # =========================
 # ADMIN FIXO
@@ -26,26 +94,30 @@ menu = st.sidebar.selectbox(
     ["Login", "Cadastro", "Jogar", "Admin", "Ranking"]
 )
 
-st.title("🧩 Enigmas com Sistema Completo")
+st.title("🧩 Enigmas Game")
 
 st.sidebar.divider()
 
 # =========================
-# SIDEBAR USER INFO
+# HUD USER
 # =========================
-if "user_id" in st.session_state:
+st.sidebar.markdown("## 🎮 PLAYER HUD")
 
+if "user_id" in st.session_state:
     user = obter_usuario(st.session_state["user_id"])
 
-    st.sidebar.subheader("👤 Usuário logado")
-    st.sidebar.write(f"**Nome:** {user['usuario']}")
-    st.sidebar.write(f"**Pontos:** {user['pontos']}")
+    st.sidebar.markdown(f"""
+    <div style="padding:10px; background:#0b1220; border-radius:10px;">
+        👤 <b>{user['usuario']}</b><br>
+        ⭐ Pontos: <b>{user['pontos']}</b>
+    </div>
+    """, unsafe_allow_html=True)
 
     if st.sidebar.button("🚪 Sair"):
         logout()
 
 else:
-    st.sidebar.info("Você não está logado")
+    st.sidebar.info("Deslogado")
 
 # =========================
 # CADASTRO
@@ -69,6 +141,7 @@ elif menu == "Login":
 
     if st.button("Entrar"):
         uid = login(user, senha)
+
         if uid:
             st.session_state["user_id"] = uid
             st.success("Logado!")
@@ -95,18 +168,32 @@ elif menu == "Jogar":
 
     e = st.session_state["enigma"]
 
-    st.title(e["pergunta"])
+    # =========================
+    # CARD ENIGMA
+    # =========================
+    st.markdown(f"""
+    <div class="game-card">
+        <h2 class="glow">🧩 Enigma</h2>
+        <p style="font-size:18px">{e['pergunta']}</p>
+    </div>
+    """, unsafe_allow_html=True)
 
     # =========================
-    # DICAS PROGRESSIVAS
+    # DICAS
     # =========================
-    if st.button("Mostrar dica"):
+    if st.button("💡 Mostrar dica"):
 
         dicas = e.get("dicas", [])
 
         if st.session_state["dica_index"] < len(dicas):
 
-            st.info(dicas[st.session_state["dica_index"]])
+            st.markdown(f"""
+            <div class="game-card">
+                <b style="color:#facc15">💡 Dica:</b><br>
+                {dicas[st.session_state['dica_index']]}
+            </div>
+            """, unsafe_allow_html=True)
+
             st.session_state["dica_index"] += 1
 
             st.session_state["pontos_atual"] = max(
@@ -119,13 +206,16 @@ elif menu == "Jogar":
 
     st.write(f"⭐ Pontos atuais: {st.session_state['pontos_atual']}")
 
+    # =========================
+    # CONTROLE DE TENTATIVAS
+    # =========================
     status = get_status(st.session_state["user_id"], e["id"])
 
     if status and status["concluido"]:
         st.error("Você já concluiu este enigma")
         st.stop()
 
-    resposta = st.text_input("Resposta")
+    resposta = st.text_input("Sua resposta")
 
     if st.button("Responder"):
 
@@ -136,7 +226,7 @@ elif menu == "Jogar":
 
         if resposta.strip().lower() == e["resposta"].strip().lower():
 
-            st.success("Correto!")
+            st.success("✅ Correto!")
 
             adicionar_pontos(
                 st.session_state["user_id"],
@@ -152,7 +242,7 @@ elif menu == "Jogar":
         else:
 
             if done:
-                st.error("3 tentativas atingidas")
+                st.error("❌ 3 tentativas atingidas")
             else:
                 st.error(f"Errado ({tent}/3)")
 
@@ -173,7 +263,7 @@ elif menu == "Admin":
 
     else:
 
-        st.subheader("Criar Enigma")
+        st.subheader("🧩 Criar Enigma")
 
         pergunta = st.text_area("Pergunta")
         resposta = st.text_input("Resposta")
@@ -188,7 +278,7 @@ elif menu == "Admin":
 
             criar_enigma(pergunta, resposta, dicas, dificuldade, pontos)
 
-            st.success("Criado!")
+            st.success("Enigma criado!")
 
 # =========================
 # RANKING
@@ -198,4 +288,4 @@ elif menu == "Ranking":
     st.title("🏆 Ranking Global")
 
     for u in ranking():
-        st.write(f"{u['usuario']} - {u['pontos']} pts")
+        st.write(f"👤 {u['usuario']} — ⭐ {u['pontos']} pts")
