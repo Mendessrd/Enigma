@@ -1,12 +1,18 @@
 import streamlit as st
-from db import cadastrar, login, adicionar_pontos, obter_usuario
-from ia import gerar_enigma, validar_resposta
+from db import (
+    cadastrar,
+    login,
+    adicionar_pontos,
+    obter_usuario,
+    criar_enigma,
+    pegar_enigma_aleatorio
+)
 
 st.set_page_config(page_title="Jogo de Enigmas", layout="centered")
 
-st.title("🧩 Enigmas com IA")
+st.title("🧩 Enigmas")
 
-menu = st.sidebar.selectbox("Menu", ["Login", "Cadastro", "Jogar"])
+menu = st.sidebar.selectbox("Menu", ["Login", "Cadastro", "Jogar", "Admin"])
 
 # ==============================
 # CADASTRO
@@ -41,35 +47,39 @@ elif menu == "Login":
 # JOGO
 # ==============================
 elif menu == "Jogar":
+
     if "user_id" not in st.session_state:
         st.warning("Faça login primeiro")
+
     else:
         if "enigma" not in st.session_state:
-            enigma, resposta, dica = gerar_enigma()
+            enigma = pegar_enigma_aleatorio()
+
+            if not enigma:
+                st.warning("Nenhum enigma cadastrado")
+                st.stop()
 
             st.session_state["enigma"] = enigma
-            st.session_state["resposta"] = resposta
-            st.session_state["dica"] = dica
+
+        e = st.session_state["enigma"]
 
         st.subheader("🧩 Enigma")
-        st.write(st.session_state["enigma"])
+        st.write(e["enigma"])
 
         if st.button("Mostrar dica"):
-            st.info(st.session_state["dica"])
+            st.info(e["dica"])
 
         resposta_user = st.text_input("Sua resposta")
 
         if st.button("Responder"):
-            correto = validar_resposta(
-                resposta_user,
-                st.session_state["resposta"]
-            )
-
-            if correto:
+            if resposta_user.strip().lower() == e["resposta"].strip().lower():
                 st.success("✅ Correto!")
-                adicionar_pontos(st.session_state["user_id"], 10)
 
-                # novo enigma
+                adicionar_pontos(
+                    st.session_state["user_id"],
+                    e["pontos"]
+                )
+
                 del st.session_state["enigma"]
 
             else:
@@ -77,3 +87,27 @@ elif menu == "Jogar":
 
         user = obter_usuario(st.session_state["user_id"])
         st.write(f"⭐ Pontos: {user['pontos']}")
+
+# ==============================
+# ADMIN
+# ==============================
+elif menu == "Admin":
+
+    st.subheader("🔐 Painel Admin - Criar Enigmas")
+
+    enigma = st.text_area("Enigma")
+    resposta = st.text_input("Resposta")
+    dica = st.text_input("Dica")
+
+    dificuldade = st.selectbox(
+        "Dificuldade",
+        ["fácil", "médio", "difícil"]
+    )
+
+    pontos = st.number_input("Pontos", min_value=1, value=10)
+
+    if st.button("Criar Enigma"):
+        if criar_enigma(enigma, resposta, dica, dificuldade, pontos):
+            st.success("Enigma criado!")
+        else:
+            st.error("Erro ao criar enigma")
