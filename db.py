@@ -1,20 +1,24 @@
-import os
+import streamlit as st
 import bcrypt
 from supabase import create_client
-from dotenv import load_dotenv
 
-load_dotenv()
-
+# ==============================
+# CONEXÃO SUPABASE
+# ==============================
 supabase = create_client(
-    os.getenv("SUPABASE_URL"),
-    os.getenv("SUPABASE_KEY")
+    st.secrets["SUPABASE_URL"],
+    st.secrets["SUPABASE_KEY"]
 )
 
 # ==============================
 # USUÁRIOS
 # ==============================
+
 def cadastrar(usuario, senha):
-    senha_hash = bcrypt.hashpw(senha.encode(), bcrypt.gensalt()).decode()
+    senha_hash = bcrypt.hashpw(
+        senha.encode(),
+        bcrypt.gensalt()
+    ).decode()
 
     data = {
         "usuario": usuario,
@@ -27,23 +31,37 @@ def cadastrar(usuario, senha):
 
 
 def login(usuario, senha):
-    res = supabase.table("usuarios").select("*").eq("usuario", usuario).execute()
+    res = (
+        supabase.table("usuarios")
+        .select("*")
+        .eq("usuario", usuario)
+        .execute()
+    )
 
     if res.data:
         user = res.data[0]
-        if bcrypt.checkpw(senha.encode(), user["senha"].encode()):
+
+        if bcrypt.checkpw(
+            senha.encode(),
+            user["senha"].encode()
+        ):
             return user["id"]
 
     return None
 
 
 def adicionar_pontos(user_id, pontos):
-    user = supabase.table("usuarios").select("pontos").eq("id", user_id).execute()
+    res = (
+        supabase.table("usuarios")
+        .select("pontos")
+        .eq("id", user_id)
+        .execute()
+    )
 
-    if not user.data:
+    if not res.data:
         return False
 
-    total = user.data[0]["pontos"] + pontos
+    total = res.data[0]["pontos"] + pontos
 
     supabase.table("usuarios").update({
         "pontos": total
@@ -53,7 +71,12 @@ def adicionar_pontos(user_id, pontos):
 
 
 def obter_usuario(user_id):
-    res = supabase.table("usuarios").select("*").eq("id", user_id).execute()
+    res = (
+        supabase.table("usuarios")
+        .select("*")
+        .eq("id", user_id)
+        .execute()
+    )
 
     if res.data:
         return res.data[0]
