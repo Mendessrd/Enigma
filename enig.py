@@ -1,5 +1,5 @@
 import streamlit as st
-from jogossql import cadastrar, login, adicionar_pontos, obter_usuario
+from db import cadastrar, login, adicionar_pontos, obter_usuario
 from ia import gerar_enigma, validar_resposta
 
 st.set_page_config(page_title="Jogo de Enigmas", layout="centered")
