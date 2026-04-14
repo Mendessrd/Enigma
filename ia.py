@@ -5,6 +5,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+import streamlit as st
+from openai import OpenAI
+
+# ==============================
+# CLIENT OPENAI (CLOUD SAFE)
+# ==============================
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 # ==============================
 # GERAR ENIGMA
