@@ -2,3 +2,4 @@ streamlit
 bcrypt
 supabase
 python-dotenv
+openai
