@@ -13,10 +13,7 @@ supabase = create_client(
 # ==============================
 
 def cadastrar(usuario, senha):
-    senha_hash = bcrypt.hashpw(
-        senha.encode(),
-        bcrypt.gensalt()
-    ).decode()
+    senha_hash = bcrypt.hashpw(senha.encode(), bcrypt.gensalt()).decode()
 
     data = {
         "usuario": usuario,
@@ -35,10 +32,7 @@ def login(usuario, senha):
     if res.data:
         user = res.data[0]
 
-        if bcrypt.checkpw(
-            senha.encode(),
-            user["senha"].encode()
-        ):
+        if bcrypt.checkpw(senha.encode(), user["senha"].encode()):
             return user["id"]
 
     return None
@@ -52,10 +46,7 @@ def adicionar_pontos(user_id, pontos):
 
     total = res.data[0]["pontos"] + pontos
 
-    supabase.table("usuarios").update({
-        "pontos": total
-    }).eq("id", user_id).execute()
-
+    supabase.table("usuarios").update({"pontos": total}).eq("id", user_id).execute()
     return True
 
 
@@ -70,9 +61,9 @@ def obter_usuario(user_id):
 
 def criar_enigma(pergunta, resposta, dica, dificuldade, pontos):
     data = {
-        "pergunta": pergunta,   # ✅ CORRIGIDO
+        "pergunta": pergunta,
         "resposta": resposta,
-        "dica": dica,           # ✅ agora existe na tabela
+        "dica": dica,
         "dificuldade": dificuldade,
         "pontos": pontos
     }

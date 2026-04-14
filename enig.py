@@ -10,7 +10,13 @@ from db import (
 
 st.set_page_config(page_title="Jogo de Enigmas", layout="centered")
 
-st.title("🧩 Enigmas")
+st.title("🧩 Enigmas com Admin")
+
+# ==============================
+# ADMIN FIXO
+# ==============================
+ADMIN_USER = "admin"
+ADMIN_PASS = "1234"
 
 menu = st.sidebar.selectbox("Menu", ["Login", "Cadastro", "Jogar", "Admin"])
 
@@ -18,6 +24,7 @@ menu = st.sidebar.selectbox("Menu", ["Login", "Cadastro", "Jogar", "Admin"])
 # CADASTRO
 # ==============================
 if menu == "Cadastro":
+
     user = st.text_input("Usuário")
     senha = st.text_input("Senha", type="password")
 
@@ -31,6 +38,7 @@ if menu == "Cadastro":
 # LOGIN
 # ==============================
 elif menu == "Login":
+
     user = st.text_input("Usuário")
     senha = st.text_input("Senha", type="password")
 
@@ -64,7 +72,7 @@ elif menu == "Jogar":
         e = st.session_state["enigma"]
 
         st.subheader("🧩 Enigma")
-        st.write(e["pergunta"])   # ✅ CORRIGIDO
+        st.write(e["pergunta"])
 
         if st.button("Mostrar dica"):
             st.info(e["dica"])
@@ -72,7 +80,9 @@ elif menu == "Jogar":
         resposta_user = st.text_input("Sua resposta")
 
         if st.button("Responder"):
+
             if resposta_user.strip().lower() == e["resposta"].strip().lower():
+
                 st.success("✅ Correto!")
 
                 adicionar_pontos(
@@ -93,21 +103,41 @@ elif menu == "Jogar":
 # ==============================
 elif menu == "Admin":
 
-    st.subheader("🔐 Painel Admin - Criar Enigmas")
+    st.subheader("🔐 Painel Admin")
 
-    pergunta = st.text_area("Enigma")
-    resposta = st.text_input("Resposta")
-    dica = st.text_input("Dica")
+    if "admin_logado" not in st.session_state:
 
-    dificuldade = st.selectbox(
-        "Dificuldade",
-        ["fácil", "médio", "difícil"]
-    )
+        user = st.text_input("Admin usuário")
+        senha = st.text_input("Senha admin", type="password")
 
-    pontos = st.number_input("Pontos", min_value=1, value=10)
+        if st.button("Entrar como admin"):
 
-    if st.button("Criar Enigma"):
-        if criar_enigma(pergunta, resposta, dica, dificuldade, pontos):
-            st.success("Enigma criado!")
-        else:
-            st.error("Erro ao criar enigma")
+            if user == ADMIN_USER and senha == ADMIN_PASS:
+                st.session_state["admin_logado"] = True
+                st.success("Bem-vindo Admin!")
+
+            else:
+                st.error("Acesso negado")
+
+    else:
+        st.success("Modo admin ativo")
+
+        st.subheader("🧩 Criar Enigma")
+
+        pergunta = st.text_area("Enigma")
+        resposta = st.text_input("Resposta")
+        dica = st.text_input("Dica")
+
+        dificuldade = st.selectbox(
+            "Dificuldade",
+            ["fácil", "médio", "difícil"]
+        )
+
+        pontos = st.number_input("Pontos", min_value=1, value=10)
+
+        if st.button("Criar Enigma"):
+
+            if criar_enigma(pergunta, resposta, dica, dificuldade, pontos):
+                st.success("Enigma criado!")
+            else:
+                st.error("Erro ao criar enigma")
