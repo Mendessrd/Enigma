@@ -4,7 +4,7 @@ from db import *
 # =========================
 # CONFIG
 # =========================
-st.set_page_config(page_title="Enigmas do Taijara", layout="centered")
+st.set_page_config(page_title="Puzzle", layout="centered")
 
 # =========================
 # CSS GAME UI
@@ -108,7 +108,7 @@ menu = st.sidebar.selectbox(
     ["Login", "Cadastro", "Jogar", "Admin", "Ranking"]
 )
 
-st.title("🧩 Enigmas do Taijara")
+st.title("🧩Puzzle")
 
 st.sidebar.divider()
 
