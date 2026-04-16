@@ -80,7 +80,7 @@ def logout():
     st.rerun()
 
 # =========================
-# SIDEBAR HUD
+# SIDEBAR
 # =========================
 st.sidebar.markdown("## Universitários")
 
@@ -108,7 +108,7 @@ menu = st.sidebar.selectbox(
     ["Login", "Cadastro", "Jogar", "Admin", "Ranking"]
 )
 
-st.title("🧩Puzzle")
+st.title("🧩 Puzzle")
 
 st.sidebar.divider()
 
@@ -138,7 +138,7 @@ elif menu == "Login":
             st.success("Logado!")
 
 # =========================
-# JOGO
+# JOGO (CORRIGIDO)
 # =========================
 elif menu == "Jogar":
 
@@ -149,7 +149,7 @@ elif menu == "Jogar":
     st.subheader("🎮 Selecionar Enigma")
 
     # =========================
-    # SE JÁ ESCOLHEU UM ENIGMA
+    # SE TEM ENIGMA SELECIONADO
     # =========================
     if "enigma" in st.session_state:
 
@@ -161,7 +161,7 @@ elif menu == "Jogar":
         </div>
         """, unsafe_allow_html=True)
 
-        if st.button("🔙 Voltar para lista"):
+        if st.button("🔙 Voltar"):
             del st.session_state["enigma"]
             del st.session_state["dica_index"]
             del st.session_state["pontos_atual"]
@@ -192,7 +192,7 @@ elif menu == "Jogar":
 
         st.write(f"⭐ Pontos: {st.session_state['pontos_atual']}")
 
-        resposta = st.text_input("Resposta")
+        resposta = st.text_input("Resposta", key=f"resposta_{e['id']}")
 
         status = get_status(st.session_state["user_id"], e["id"])
 
@@ -200,7 +200,7 @@ elif menu == "Jogar":
             st.error("Já concluído")
             st.stop()
 
-        if st.button("Responder"):
+        if st.button("Responder", key=f"resp_{e['id']}"):
 
             tent, done = registrar_tentativa(
                 st.session_state["user_id"],
@@ -228,7 +228,7 @@ elif menu == "Jogar":
                 st.error(f"Errado ({tent}/3)" if not done else "3 tentativas atingidas")
 
     # =========================
-    # SE NÃO TEM ENIGMA → MOSTRA LISTA
+    # LISTA DE ENIGMAS
     # =========================
     else:
 
@@ -249,85 +249,11 @@ elif menu == "Jogar":
             </div>
             """, unsafe_allow_html=True)
 
-            if st.button(f"Jogar #{e['id']}"):
+            if st.button(f"Jogar #{e['id']}", key=f"play_{e['id']}"):
                 st.session_state["enigma"] = e
                 st.session_state["dica_index"] = 0
                 st.session_state["pontos_atual"] = e["pontos"]
                 st.rerun()
-
-    if "enigma" in st.session_state:
-
-        e = st.session_state["enigma"]
-
-        st.markdown(f"""
-        <div class="game-card">
-            <h2 class="glow">🧩 {e['pergunta']}</h2>
-        </div>
-        """, unsafe_allow_html=True)
-
-        if st.button("💡 Mostrar dica"):
-
-            dicas = e.get("dicas", [])
-
-            if st.session_state["dica_index"] < len(dicas):
-
-                st.session_state["dica_index"] += 1
-
-                st.session_state["pontos_atual"] = max(
-                    0,
-                    st.session_state["pontos_atual"] - 5
-                )
-
-        dicas = e.get("dicas", [])
-
-        if dicas:
-            st.markdown("### 💡 Dicas desbloqueadas:")
-
-            for i in range(st.session_state["dica_index"]):
-                st.markdown(f"""
-                <div class="game-card">
-                    💡 {dicas[i]}
-                </div>
-                """, unsafe_allow_html=True)
-        else:
-            st.info("Nenhuma dica disponível")
-
-        st.write(f"⭐ Pontos: {st.session_state['pontos_atual']}")
-
-        resposta = st.text_input("Resposta")
-
-        status = get_status(st.session_state["user_id"], e["id"])
-
-        if status and status["concluido"]:
-            st.error("Já concluído")
-            st.stop()
-
-        if st.button("Responder"):
-
-            tent, done = registrar_tentativa(
-                st.session_state["user_id"],
-                e["id"]
-            )
-
-            if resposta.strip().lower() == e["resposta"].strip().lower():
-
-                st.success("Correto!")
-
-                adicionar_pontos(
-                    st.session_state["user_id"],
-                    st.session_state["pontos_atual"]
-                )
-
-                marcar_concluido(st.session_state["user_id"], e["id"])
-
-                del st.session_state["enigma"]
-                del st.session_state["dica_index"]
-                del st.session_state["pontos_atual"]
-
-                st.rerun()
-
-            else:
-                st.error(f"Errado ({tent}/3)" if not done else "3 tentativas atingidas")
 
 # =========================
 # ADMIN
@@ -345,14 +271,14 @@ elif menu == "Admin":
             if u == ADMIN_USER and p == ADMIN_PASS:
                 st.session_state["admin"] = True
                 st.success("👑 Bem-vindo, administrador!")
-                st.toast("Acesso liberado ao painel admin")
+                st.toast("Acesso liberado")
                 st.rerun()
             else:
                 st.error("Usuário ou senha inválidos")
 
     else:
 
-        st.success("👑 Você está no painel de administrador")
+        st.success("👑 Painel admin")
         st.subheader("Criar Enigma")
 
         p = st.text_area("Pergunta")
@@ -362,11 +288,8 @@ elif menu == "Admin":
         pts = st.number_input("Pontos", 1, 100, 10)
 
         if st.button("Criar"):
-
             dicas = [x for x in d.split("\n") if x.strip()]
-
             criar_enigma(p, r, dicas, dif, pts)
-
             st.success("Criado!")
 
 # =========================
