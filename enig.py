@@ -194,13 +194,9 @@ elif menu == "Jogar":
                     st.session_state["pontos_atual"] - 5
                 )
 
-        # =========================
-        # LISTA DE DICAS DESBLOQUEADAS
-        # =========================
         dicas = e.get("dicas", [])
 
         if dicas:
-
             st.markdown("### 💡 Dicas desbloqueadas:")
 
             for i in range(st.session_state["dica_index"]):
@@ -209,7 +205,6 @@ elif menu == "Jogar":
                     💡 {dicas[i]}
                 </div>
                 """, unsafe_allow_html=True)
-
         else:
             st.info("Nenhuma dica disponível")
 
@@ -245,6 +240,8 @@ elif menu == "Jogar":
                 del st.session_state["dica_index"]
                 del st.session_state["pontos_atual"]
 
+                st.rerun()
+
             else:
                 st.error(f"Errado ({tent}/3)" if not done else "3 tentativas atingidas")
 
@@ -255,15 +252,23 @@ elif menu == "Admin":
 
     if "admin" not in st.session_state:
 
+        st.subheader("🔐 Login Admin")
+
         u = st.text_input("Admin")
         p = st.text_input("Senha", type="password")
 
         if st.button("Entrar"):
             if u == ADMIN_USER and p == ADMIN_PASS:
                 st.session_state["admin"] = True
+                st.success("👑 Bem-vindo, administrador!")
+                st.toast("Acesso liberado ao painel admin")
+                st.rerun()
+            else:
+                st.error("Usuário ou senha inválidos")
 
     else:
 
+        st.success("👑 Você está no painel de administrador")
         st.subheader("Criar Enigma")
 
         p = st.text_area("Pergunta")
