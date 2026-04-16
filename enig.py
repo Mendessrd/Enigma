@@ -148,28 +148,112 @@ elif menu == "Jogar":
 
     st.subheader("🎮 Selecionar Enigma")
 
-    dificuldade = st.selectbox("Dificuldade", ["todos", "fácil", "médio", "difícil"])
+    # =========================
+    # SE JÁ ESCOLHEU UM ENIGMA
+    # =========================
+    if "enigma" in st.session_state:
 
-    enigmas = listar_enigmas(dificuldade)
-
-    if not enigmas:
-        st.warning("Nenhum enigma")
-        st.stop()
-
-    for e in enigmas:
+        e = st.session_state["enigma"]
 
         st.markdown(f"""
         <div class="game-card">
-            🧩 <b>{e['pergunta'][:60]}...</b><br>
-            🎯 {e['dificuldade']} | ⭐ {e['pontos']}
+            <h2 class="glow">🧩 {e['pergunta']}</h2>
         </div>
         """, unsafe_allow_html=True)
 
-        if st.button(f"Jogar #{e['id']}"):
-            st.session_state["enigma"] = e
-            st.session_state["dica_index"] = 0
-            st.session_state["pontos_atual"] = e["pontos"]
+        if st.button("🔙 Voltar para lista"):
+            del st.session_state["enigma"]
+            del st.session_state["dica_index"]
+            del st.session_state["pontos_atual"]
             st.rerun()
+
+        if st.button("💡 Mostrar dica"):
+
+            dicas = e.get("dicas", [])
+
+            if st.session_state["dica_index"] < len(dicas):
+                st.session_state["dica_index"] += 1
+                st.session_state["pontos_atual"] = max(
+                    0,
+                    st.session_state["pontos_atual"] - 5
+                )
+
+        dicas = e.get("dicas", [])
+
+        if dicas:
+            st.markdown("### 💡 Dicas desbloqueadas:")
+
+            for i in range(st.session_state["dica_index"]):
+                st.markdown(f"""
+                <div class="game-card">
+                    💡 {dicas[i]}
+                </div>
+                """, unsafe_allow_html=True)
+
+        st.write(f"⭐ Pontos: {st.session_state['pontos_atual']}")
+
+        resposta = st.text_input("Resposta")
+
+        status = get_status(st.session_state["user_id"], e["id"])
+
+        if status and status["concluido"]:
+            st.error("Já concluído")
+            st.stop()
+
+        if st.button("Responder"):
+
+            tent, done = registrar_tentativa(
+                st.session_state["user_id"],
+                e["id"]
+            )
+
+            if resposta.strip().lower() == e["resposta"].strip().lower():
+
+                st.success("Correto!")
+
+                adicionar_pontos(
+                    st.session_state["user_id"],
+                    st.session_state["pontos_atual"]
+                )
+
+                marcar_concluido(st.session_state["user_id"], e["id"])
+
+                del st.session_state["enigma"]
+                del st.session_state["dica_index"]
+                del st.session_state["pontos_atual"]
+
+                st.rerun()
+
+            else:
+                st.error(f"Errado ({tent}/3)" if not done else "3 tentativas atingidas")
+
+    # =========================
+    # SE NÃO TEM ENIGMA → MOSTRA LISTA
+    # =========================
+    else:
+
+        dificuldade = st.selectbox("Dificuldade", ["todos", "fácil", "médio", "difícil"])
+
+        enigmas = listar_enigmas(dificuldade)
+
+        if not enigmas:
+            st.warning("Nenhum enigma")
+            st.stop()
+
+        for e in enigmas:
+
+            st.markdown(f"""
+            <div class="game-card">
+                🧩 <b>{e['pergunta'][:60]}...</b><br>
+                🎯 {e['dificuldade']} | ⭐ {e['pontos']}
+            </div>
+            """, unsafe_allow_html=True)
+
+            if st.button(f"Jogar #{e['id']}"):
+                st.session_state["enigma"] = e
+                st.session_state["dica_index"] = 0
+                st.session_state["pontos_atual"] = e["pontos"]
+                st.rerun()
 
     if "enigma" in st.session_state:
 
