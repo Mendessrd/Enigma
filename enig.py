@@ -123,7 +123,7 @@ if menu == "Cadastro":
 
     if st.button("Cadastrar"):
         cadastrar(u, s)
-        st.success("Criado!")
+        st.success("👤Unisersitário Criado!")
 
 # =========================
 # LOGIN
@@ -137,9 +137,12 @@ elif menu == "Login":
 
         if uid:
             st.session_state["user_id"] = uid
+            st.success("✅ Login realizado!")
+            time.sleep(1.5)
             st.session_state["menu"] = "Jogar"
-            st.success("Logado!")
             st.rerun()
+        else:
+            st.error("❌ Usuário ou senha inválidos")
 
 # =========================
 # JOGAR
