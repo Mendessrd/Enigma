@@ -7,26 +7,28 @@ from db import *
 st.set_page_config(page_title="Puzzle", layout="centered")
 
 # =========================
+# CONTROLE DE MENU
+# =========================
+if "menu" not in st.session_state:
+    st.session_state["menu"] = "Login"
+
+# =========================
 # CSS GAME UI
 # =========================
 st.markdown("""
 <style>
-
 .stApp {
     background: radial-gradient(circle at top, #0f172a, #020617);
     color: white;
 }
-
 [data-testid="stSidebar"] {
     background: #0b1220;
     border-right: 1px solid #1f2937;
 }
-
 h1, h2, h3 {
     color: #00e5ff !important;
     text-shadow: 0px 0px 10px #00e5ff55;
 }
-
 .stButton button {
     background: linear-gradient(90deg, #00e5ff, #7c3aed);
     color: white;
@@ -35,19 +37,16 @@ h1, h2, h3 {
     padding: 0.6rem 1rem;
     font-weight: bold;
 }
-
 .stButton button:hover {
     transform: scale(1.03);
     box-shadow: 0 0 15px #00e5ff88;
 }
-
 input, textarea {
     background-color: #0b1220 !important;
     color: white !important;
     border: 1px solid #1f2937 !important;
     border-radius: 8px !important;
 }
-
 .game-card {
     background: #0b1220;
     padding: 20px;
@@ -55,12 +54,10 @@ input, textarea {
     border: 1px solid #1f2937;
     margin-bottom: 15px;
 }
-
 .glow {
     color: #00e5ff;
     text-shadow: 0 0 10px #00e5ff;
 }
-
 </style>
 """, unsafe_allow_html=True)
 
@@ -77,6 +74,8 @@ def logout():
     for key in ["user_id", "enigma", "dica_index", "pontos_atual", "admin"]:
         if key in st.session_state:
             del st.session_state[key]
+
+    st.session_state["menu"] = "Login"
     st.rerun()
 
 # =========================
@@ -102,10 +101,15 @@ else:
 # =========================
 # MENU
 # =========================
+opcoes_menu = ["Login", "Cadastro", "Jogar", "Resolvidos", "Admin", "Ranking"]
+
 menu = st.sidebar.selectbox(
     "Menu",
-    ["Login", "Cadastro", "Jogar", "Resolvidos", "Admin", "Ranking"]
+    opcoes_menu,
+    index=opcoes_menu.index(st.session_state["menu"])
 )
+
+st.session_state["menu"] = menu
 
 st.title("🧩 Puzzle")
 st.sidebar.divider()
@@ -133,7 +137,9 @@ elif menu == "Login":
 
         if uid:
             st.session_state["user_id"] = uid
+            st.session_state["menu"] = "Jogar"
             st.success("Logado!")
+            st.rerun()
 
 # =========================
 # JOGAR
@@ -146,9 +152,6 @@ elif menu == "Jogar":
 
     st.subheader("🎮 Selecionar Enigma")
 
-    # =========================
-    # SE TEM ENIGMA ATIVO
-    # =========================
     if "enigma" in st.session_state:
 
         e = st.session_state["enigma"]
@@ -166,7 +169,6 @@ elif menu == "Jogar":
             st.rerun()
 
         if st.button("💡 Mostrar dica"):
-
             dicas = e.get("dicas", [])
 
             if st.session_state["dica_index"] < len(dicas):
@@ -180,7 +182,6 @@ elif menu == "Jogar":
 
         if dicas:
             st.markdown("### 💡 Dicas desbloqueadas:")
-
             for i in range(st.session_state["dica_index"]):
                 st.markdown(f"""
                 <div class="game-card">
@@ -225,9 +226,6 @@ elif menu == "Jogar":
             else:
                 st.error(f"Errado ({tent}/3)" if not done else "3 tentativas atingidas")
 
-    # =========================
-    # LISTA DE ENIGMAS
-    # =========================
     else:
 
         dificuldade = st.selectbox("Dificuldade", ["todos", "fácil", "médio", "difícil"])
