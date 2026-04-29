@@ -96,7 +96,6 @@ if "user_id" in st.session_state:
 
     if st.sidebar.button("🚪 Sair"):
         logout()
-
 else:
     st.sidebar.info("Deslogado")
 
@@ -105,11 +104,10 @@ else:
 # =========================
 menu = st.sidebar.selectbox(
     "Menu",
-    ["Login", "Cadastro", "Jogar", "Admin", "Ranking"]
+    ["Login", "Cadastro", "Jogar", "Resolvidos", "Admin", "Ranking"]
 )
 
 st.title("🧩 Puzzle")
-
 st.sidebar.divider()
 
 # =========================
@@ -138,7 +136,7 @@ elif menu == "Login":
             st.success("Logado!")
 
 # =========================
-# JOGO (CORRIGIDO)
+# JOGAR
 # =========================
 elif menu == "Jogar":
 
@@ -149,7 +147,7 @@ elif menu == "Jogar":
     st.subheader("🎮 Selecionar Enigma")
 
     # =========================
-    # SE TEM ENIGMA SELECIONADO
+    # SE TEM ENIGMA ATIVO
     # =========================
     if "enigma" in st.session_state:
 
@@ -234,10 +232,13 @@ elif menu == "Jogar":
 
         dificuldade = st.selectbox("Dificuldade", ["todos", "fácil", "médio", "difícil"])
 
-        enigmas = listar_enigmas(dificuldade)
+        enigmas = listar_enigmas_disponiveis(
+            st.session_state["user_id"],
+            dificuldade
+        )
 
         if not enigmas:
-            st.warning("Nenhum enigma")
+            st.warning("Nenhum enigma disponível 🎉")
             st.stop()
 
         for e in enigmas:
@@ -256,6 +257,31 @@ elif menu == "Jogar":
                 st.rerun()
 
 # =========================
+# RESOLVIDOS
+# =========================
+elif menu == "Resolvidos":
+
+    if "user_id" not in st.session_state:
+        st.warning("Faça login")
+        st.stop()
+
+    st.title("✅ Enigmas Resolvidos")
+
+    enigmas = listar_enigmas_resolvidos(st.session_state["user_id"])
+
+    if not enigmas:
+        st.info("Você ainda não resolveu nenhum enigma")
+        st.stop()
+
+    for e in enigmas:
+        st.markdown(f"""
+        <div class="game-card">
+            🧩 <b>{e['pergunta']}</b><br>
+            🎯 {e['dificuldade']} | ⭐ {e['pontos']}
+        </div>
+        """, unsafe_allow_html=True)
+
+# =========================
 # ADMIN
 # =========================
 elif menu == "Admin":
@@ -271,7 +297,6 @@ elif menu == "Admin":
             if u == ADMIN_USER and p == ADMIN_PASS:
                 st.session_state["admin"] = True
                 st.success("👑 Bem-vindo, administrador!")
-                st.toast("Acesso liberado")
                 st.rerun()
             else:
                 st.error("Usuário ou senha inválidos")
