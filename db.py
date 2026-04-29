@@ -26,7 +26,11 @@ def cadastrar(usuario, senha):
 
 
 def login(usuario, senha):
-    res = supabase.table("usuarios").select("*").eq("usuario", usuario).execute()
+    try:
+        res = supabase.table("usuarios").select("*").eq("usuario", usuario).execute()
+    except Exception as e:
+        st.error(f"Erro de conexão: {e}")
+        return None
 
     if res.data:
         user = res.data[0]
@@ -69,18 +73,42 @@ def criar_enigma(pergunta, resposta, dicas, dificuldade, pontos):
     }).execute().data
 
 
-def listar_enigmas(filtro_dificuldade="todos"):
+def listar_enigmas_disponiveis(user_id, dificuldade="todos"):
     query = supabase.table("enigmas").select("*")
 
-    if filtro_dificuldade != "todos":
-        query = query.eq("dificuldade", filtro_dificuldade)
+    if dificuldade != "todos":
+        query = query.eq("dificuldade", dificuldade)
 
-    return query.execute().data
+    enigmas = query.execute().data
+
+    tentativas = supabase.table("tentativas") \
+        .select("enigma_id, concluido") \
+        .eq("usuario_id", user_id) \
+        .execute().data
+
+    concluidos = {t["enigma_id"] for t in tentativas if t["concluido"]}
+
+    return [e for e in enigmas if e["id"] not in concluidos]
 
 
-def pegar_enigma_aleatorio():
-    res = supabase.table("enigmas").select("*").execute()
-    return random.choice(res.data) if res.data else None
+def listar_enigmas_resolvidos(user_id):
+    tentativas = supabase.table("tentativas") \
+        .select("enigma_id") \
+        .eq("usuario_id", user_id) \
+        .eq("concluido", True) \
+        .execute().data
+
+    if not tentativas:
+        return []
+
+    ids = [t["enigma_id"] for t in tentativas]
+
+    enigmas = supabase.table("enigmas") \
+        .select("*") \
+        .in_("id", ids) \
+        .execute().data
+
+    return enigmas
 
 
 # =========================
