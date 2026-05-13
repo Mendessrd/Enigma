@@ -226,8 +226,19 @@ elif menu == "Jogar":
 
                 st.rerun()
 
+            if done:
+                st.error("❌ 3 tentativas atingidas!")
+                st.info(f"✅ A resposta correta era: {e['resposta']}")
+                
+                # opcional: limpar enigma atual
+                del st.session_state["enigma"]
+                del st.session_state["dica_index"]
+                del st.session_state["pontos_atual"]
+
+                st.rerun()
+
             else:
-                st.error(f"Errado ({tent}/3)" if not done else "3 tentativas atingidas")
+                st.error(f"❌ Errado ({tent}/3)")
 
     else:
 
