@@ -229,7 +229,7 @@ elif menu == "Jogar":
             if done:
                 st.error("❌ 3 tentativas atingidas!")
                 st.info(f"✅ A resposta correta era: {e['resposta']}")
-                time.sleep(5)
+                time.sleep(3)
 
                 
                 del st.session_state["enigma"]
