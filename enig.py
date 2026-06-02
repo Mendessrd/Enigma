@@ -160,9 +160,16 @@ if menu == "Login":
         if st.button("Cadastrar", use_container_width=True):
 
             cadastrar(novo_user, nova_senha)
+            uid = login(novo_user, nova_senha)
 
-            st.success("🎉 Usuário criado com sucesso!")
+            if uid:
+                st.session_state["user_id"] = id
+                time.sleep(3)
 
+                st.session_state["menu"] = "Jogar"
+                st.rerun()
+            else:
+                st.error("Erro ao entrar automaticamente.")
 # =========================
 # JOGAR
 # =========================
