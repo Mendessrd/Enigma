@@ -101,7 +101,18 @@ else:
 # =========================
 # MENU
 # =========================
-opcoes_menu = ["Login", "Jogar", "Resolvidos", "Admin", "Ranking"]
+if "user_id" in st.session_state:
+    opcoes_menu = [
+        "Jogar",
+        "Resolvidos",
+        "Ranking",
+        "Admin"
+    ]
+else:
+    opcoes_menu = ["Login"]
+
+if st.session_state["menu"] not in opcoes_menu:
+    st.session_state["menu"] = opcoes_menu[0]
 
 menu = st.sidebar.selectbox(
     "Menu",
