@@ -294,6 +294,9 @@ elif menu == "Resolvidos":
         </div>
         """, unsafe_allow_html=True)
 
+        with st.expander("👁️ Ver resposta"):
+            st.success(f"💡 {e['resposta']}")
+
 # =========================
 # ADMIN
 # =========================
