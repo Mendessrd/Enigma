@@ -163,8 +163,8 @@ if menu == "Login":
             uid = login(novo_user, nova_senha)
 
             if uid:
-                st.session_state["user_id"] = id
-                time.sleep(3)
+                st.session_state["user_id"] = uid
+                time.sleep(5)
 
                 st.session_state["menu"] = "Jogar"
                 st.rerun()
