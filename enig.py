@@ -166,7 +166,7 @@ if menu == "Login":
             if uid:
                 st.session_state["user_id"] = uid
                 st.success("✅ Cadastro Realizado com Sucesso!")
-                time.sleep(4)
+                time.sleep(1)
 
                 st.session_state["menu"] = "Jogar"
                 st.rerun()
