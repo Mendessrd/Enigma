@@ -161,10 +161,12 @@ if menu == "Login":
 
             cadastrar(novo_user, nova_senha)
             uid = login(novo_user, nova_senha)
+            
 
             if uid:
                 st.session_state["user_id"] = uid
-                time.sleep(5)
+                st.success("✅ Cadastro Realizado com Sucesso!")
+                time.sleep(4)
 
                 st.session_state["menu"] = "Jogar"
                 st.rerun()
