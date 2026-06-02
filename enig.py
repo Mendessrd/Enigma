@@ -101,7 +101,7 @@ else:
 # =========================
 # MENU
 # =========================
-opcoes_menu = ["Login", "Cadastro", "Jogar", "Resolvidos", "Admin", "Ranking"]
+opcoes_menu = ["Login", "Jogar", "Resolvidos", "Admin", "Ranking"]
 
 menu = st.sidebar.selectbox(
     "Menu",
@@ -114,35 +114,54 @@ st.session_state["menu"] = menu
 st.title("🧩 Puzzle")
 st.sidebar.divider()
 
-# =========================
-# CADASTRO
-# =========================
-if menu == "Cadastro":
-    u = st.text_input("Usuário")
-    s = st.text_input("Senha", type="password")
 
-    if st.button("Cadastrar"):
-        cadastrar(u, s)
-        st.success("👤Unisersitário Criado!")
+if menu == "Login":
 
-# =========================
-# LOGIN
-# =========================
-elif menu == "Login":
-    u = st.text_input("Usuário")
-    s = st.text_input("Senha", type="password")
+    tab1, tab2 = st.tabs(["🔑 Login", "👤 Cadastro"])
 
-    if st.button("Entrar"):
-        uid = login(u, s)
+    # =========================
+    # LOGIN
+    # =========================
+    with tab1:
+        st.subheader("Entrar")
 
-        if uid:
-            st.session_state["user_id"] = uid
-            st.success("✅ Login realizado!")
-            time.sleep(1.5)
-            st.session_state["menu"] = "Jogar"
-            st.rerun()
-        else:
-            st.error("❌ Usuário ou senha inválidos")
+        u = st.text_input("Usuário", key="login_user")
+        s = st.text_input("Senha", type="password", key="login_pass")
+
+        if st.button("Entrar", use_container_width=True):
+
+            uid = login(u, s)
+
+            if uid:
+                st.session_state["user_id"] = uid
+                st.success("✅ Login realizado!")
+
+                time.sleep(1)
+
+                st.session_state["menu"] = "Jogar"
+                st.rerun()
+
+            else:
+                st.error("❌ Usuário ou senha inválidos")
+
+    # =========================
+    # CADASTRO
+    # =========================
+    with tab2:
+        st.subheader("Criar conta")
+
+        novo_user = st.text_input("Usuário", key="cad_user")
+        nova_senha = st.text_input(
+            "Senha",
+            type="password",
+            key="cad_pass"
+        )
+
+        if st.button("Cadastrar", use_container_width=True):
+
+            cadastrar(novo_user, nova_senha)
+
+            st.success("🎉 Usuário criado com sucesso!")
 
 # =========================
 # JOGAR
