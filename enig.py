@@ -65,7 +65,7 @@ input, textarea {
 # ADMIN FIXO
 # =========================
 ADMIN_USER = "admin"
-ADMIN_PASS = "1234"
+ADMIN_PASS = "9876"
 
 # =========================
 # LOGOUT
@@ -105,8 +105,7 @@ if "user_id" in st.session_state:
     opcoes_menu = [
         "Jogar",
         "Resolvidos",
-        "Ranking",
-        "Admin"
+        "Ranking"
     ]
 else:
     opcoes_menu = ["Login"]
@@ -140,6 +139,12 @@ if menu == "Login":
         s = st.text_input("Senha", type="password", key="login_pass")
 
         if st.button("Entrar", use_container_width=True):
+            
+            if u == ADMIN_USER and s == ADMIN_PASS:
+                st.session_state["admin"] = True
+                st.success("👑 Login de administrador realizado!")
+                time.sleep(1)
+                st.rerun()
 
             uid = login(u, s)
 
