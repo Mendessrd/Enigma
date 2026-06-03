@@ -98,6 +98,29 @@ if "user_id" in st.session_state:
 else:
     st.sidebar.info("Deslogado")
 
+
+if st.session_state.get("admin", False):
+
+    st.title("👑 Painel Administrativo")
+
+    if st.button("🚪 Sair"):
+        del st.session_state["admin"]
+        st.rerun()
+
+    st.subheader("Criar Enigma")
+
+    p = st.text_area("Pergunta")
+    r = st.text_input("Resposta")
+    d = st.text_area("Dicas (uma por linha)")
+    dif = st.selectbox("Dificuldade", ["fácil", "médio", "difícil"])
+    pts = st.number_input("Pontos", 1, 100, 10)
+
+    if st.button("Criar"):
+        dicas = [x for x in d.split("\n") if x.strip()]
+        criar_enigma(p, r, dicas, dif, pts)
+        st.success("Criado!")
+
+    st.stop()
 # =========================
 # MENU
 # =========================
@@ -340,42 +363,6 @@ elif menu == "Resolvidos":
 
         with st.expander("👁️ Ver resposta"):
             st.success(f"💡 {e['resposta']}")
-
-# =========================
-# ADMIN
-# =========================
-elif menu == "Admin":
-
-    if "admin" not in st.session_state:
-
-        st.subheader("🔐 Login Admin")
-
-        u = st.text_input("Admin")
-        p = st.text_input("Senha", type="password")
-
-        if st.button("Entrar"):
-            if u == ADMIN_USER and p == ADMIN_PASS:
-                st.session_state["admin"] = True
-                st.success("👑 Bem-vindo, administrador!")
-                st.rerun()
-            else:
-                st.error("Usuário ou senha inválidos")
-
-    else:
-
-        st.success("👑 Painel admin")
-        st.subheader("Criar Enigma")
-
-        p = st.text_area("Pergunta")
-        r = st.text_input("Resposta")
-        d = st.text_area("Dicas (uma por linha)")
-        dif = st.selectbox("Dificuldade", ["fácil", "médio", "difícil"])
-        pts = st.number_input("Pontos", 1, 100, 10)
-
-        if st.button("Criar"):
-            dicas = [x for x in d.split("\n") if x.strip()]
-            criar_enigma(p, r, dicas, dif, pts)
-            st.success("Criado!")
 
 # =========================
 # RANKING
